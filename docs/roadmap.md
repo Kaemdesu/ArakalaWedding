@@ -4,14 +4,14 @@
 
 Docs, agent skills, DB schema + seeds, template seed JSONs. No app code yet.
 
-## M2 — Port the base site
+## M2 — Port the base site (done, PR #1)
 
 Port `Kaemdesu/wedding-invitation` into this repo (Next.js 16 + Tailwind v4 +
 shadcn + framer-motion + three). Replace the static `lib/wedding-config.ts`
 imports with `WeddingDataProvider` + `useWeddingData()`; `/` renders one
 invitation from a local JSON fixture.
 
-## M3 — Multi-tenant core
+## M3 — Multi-tenant core (in progress, PR #1)
 
 Apply migration + seed. `/w/[slug]` reads `invitations` + `templates` from
 Supabase. `/api/public/*` endpoints scoped by slug. One seeded invitation

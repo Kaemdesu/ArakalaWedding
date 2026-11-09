@@ -83,7 +83,7 @@ values (
       "afterCountdown": ["In every breath, in every silence,", "we are drawing nearer."]
     }
   }'::jsonb,
-  'draft',
+  'published',
   'basic',
   '',
   '00000000-0000-0000-0000-000000000001',
