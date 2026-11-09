@@ -38,20 +38,37 @@ export type WeddingData = {
   }
 }
 
-const WeddingDataContext = createContext<WeddingData | null>(null)
+type WeddingContextValue = {
+  slug: string
+  data: WeddingData
+}
+
+const WeddingDataContext = createContext<WeddingContextValue | null>(null)
 
 export function WeddingDataProvider({
+  slug,
   data,
   children,
 }: {
+  slug: string
   data: WeddingData
   children: React.ReactNode
 }) {
-  return <WeddingDataContext.Provider value={data}>{children}</WeddingDataContext.Provider>
+  return (
+    <WeddingDataContext.Provider value={{ slug, data }}>
+      {children}
+    </WeddingDataContext.Provider>
+  )
 }
 
 export function useWeddingData(): WeddingData {
   const ctx = useContext(WeddingDataContext)
   if (!ctx) throw new Error('useWeddingData must be used within <WeddingDataProvider>')
-  return ctx
+  return ctx.data
+}
+
+export function useInvitationSlug(): string {
+  const ctx = useContext(WeddingDataContext)
+  if (!ctx) throw new Error('useInvitationSlug must be used within <WeddingDataProvider>')
+  return ctx.slug
 }

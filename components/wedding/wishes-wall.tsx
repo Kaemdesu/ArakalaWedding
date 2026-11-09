@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { viewportDefaults, easeLuxury, fadeUp, staggerContainer } from '@/lib/motion'
 import type { PublicWish } from '@/lib/supabase'
+import { useInvitationSlug } from '@/lib/wedding-data'
 const PER_PAGE = 6
 const AUTO_ROTATE_MS = 7000
 const BROWSER_COOLDOWN_MS = 2 * 60 * 1000
@@ -75,6 +76,7 @@ function WishCard({ wish }: { wish: PublicWish }) {
   )
 }
 export function WishesWall() {
+  const slug = useInvitationSlug()
   const [wishes, setWishes] = useState<PublicWish[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -87,7 +89,7 @@ export function WishesWall() {
   const [errorMsg, setErrorMsg] = useState('')
   const loadAll = useCallback(async () => {
     try {
-      const res = await fetch('/api/wishes?limit=100&offset=0', { cache: 'no-store' })
+      const res = await fetch(`/api/public/wishes?slug=${encodeURIComponent(slug)}&limit=100&offset=0`, { cache: 'no-store' })
       const data = await res.json()
       setWishes(data.wishes || [])
       setTotal(data.total || 0)
@@ -96,7 +98,7 @@ export function WishesWall() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [slug])
   useEffect(() => {
     loadAll()
   }, [loadAll])
@@ -201,10 +203,10 @@ export function WishesWall() {
     setStatus('idle')
     setErrorMsg('')
     try {
-      const res = await fetch('/api/wishes', {
+      const res = await fetch('/api/public/wishes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, message }),
+        body: JSON.stringify({ slug, name, message }),
       })
       const data = await res.json()
       if (!res.ok) {

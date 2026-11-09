@@ -1,19 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
+import { resolveLiveInvitation } from '@/lib/invitations'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-// Debug endpoint — visit /api/rsvp in browser to check if route exists
-export async function GET() {
-  return NextResponse.json({
-    ok: true,
-    message: 'RSVP endpoint is live',
-    timestamp: new Date().toISOString(),
-  })
-}
-
 type RsvpPayload = {
+  slug?: string
   fullName?: string
   email?: string
   attendance?: 'accept' | 'decline'
@@ -23,6 +16,15 @@ type RsvpPayload = {
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as RsvpPayload
+
+    const slug = body.slug?.trim()
+    if (!slug) {
+      return NextResponse.json({ error: 'Missing invitation slug' }, { status: 400 })
+    }
+    const invitation = await resolveLiveInvitation(slug)
+    if (!invitation) {
+      return NextResponse.json({ error: 'Invitation not found or closed' }, { status: 404 })
+    }
 
     const fullName = body.fullName?.trim()
     const email = body.email?.trim().toLowerCase()
@@ -38,7 +40,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Please select attendance' }, { status: 400 })
     }
 
-    // Guest count only applies when accepting; capped at 5 (including themselves)
     let guestCount: number | null = null
     if (attendance === 'accept') {
       guestCount = Math.floor(Number(body.guestCount))
@@ -60,6 +61,7 @@ export async function POST(req: NextRequest) {
     const { data, error } = await supabase
       .from('rsvps')
       .insert({
+        invitation_id: invitation.id,
         full_name: fullName,
         email,
         attendance,
@@ -88,9 +90,6 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     console.error('[RSVP] Unexpected error:', err)
     const msg = err instanceof Error ? err.message : 'Unknown error'
-    return NextResponse.json(
-      { error: 'Server error: ' + msg },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Server error: ' + msg }, { status: 500 })
   }
 }

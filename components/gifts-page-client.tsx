@@ -3,11 +3,12 @@ import { ArrowLeft } from 'lucide-react'
 import { GiftRegistry } from '@/components/wedding/gift-registry'
 import { ElegantBackground } from '@/components/wedding/elegant-background'
 import { MusicPlayer } from '@/components/wedding/music-player'
-export default function GiftsPage() {
+import { useInvitationSlug } from '@/lib/wedding-data'
+
+export function GiftsPageClient() {
+  const slug = useInvitationSlug()
   const goHome = () => {
-    if (typeof window !== 'undefined') {
-      window.location.href = '/'
-    }
+    window.location.href = `/w/${slug}`
   }
   return (
     <>

@@ -1,17 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
+import { resolveLiveInvitation } from '@/lib/invitations'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
+/** GET — active gifts for an invitation */
+export async function GET(req: NextRequest) {
   try {
+    const { searchParams } = new URL(req.url)
+    const slug = searchParams.get('slug')?.trim()
+    if (!slug) {
+      return NextResponse.json({ error: 'Missing invitation slug' }, { status: 400 })
+    }
+    const invitation = await resolveLiveInvitation(slug)
+    if (!invitation) {
+      return NextResponse.json({ error: 'Invitation not found or closed' }, { status: 404 })
+    }
+
     const supabase = getSupabaseAdmin()
     const { data, error } = await supabase
       .from('gifts')
       .select(
         'id, name, description, price_idr, image_url, shop_url, shop_name, status, reserved_at, display_order, is_active, created_at, updated_at'
       )
+      .eq('invitation_id', invitation.id)
       .eq('is_active', true)
       .order('display_order', { ascending: true })
 
@@ -24,15 +37,27 @@ export async function GET() {
 }
 
 type PurchasePayload = {
+  slug?: string
   giftId?: string
   guestName?: string
   guestEmail?: string
   purchaseMessage?: string
 }
 
+/** POST — mark a gift as purchased/reserved by a guest */
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as PurchasePayload
+
+    const slug = body.slug?.trim()
+    if (!slug) {
+      return NextResponse.json({ error: 'Missing invitation slug' }, { status: 400 })
+    }
+    const invitation = await resolveLiveInvitation(slug)
+    if (!invitation) {
+      return NextResponse.json({ error: 'Invitation not found or closed' }, { status: 404 })
+    }
+
     const giftId = body.giftId?.trim()
     const guestName = body.guestName?.trim()
     const guestEmail = body.guestEmail?.trim().toLowerCase() || null
@@ -42,28 +67,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Gift ID is required' }, { status: 400 })
     }
     if (!guestName || guestName.length < 2) {
-      return NextResponse.json(
-        { error: 'Please enter your full name' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Please enter your full name' }, { status: 400 })
     }
     if (guestName.length > 100) {
-      return NextResponse.json(
-        { error: 'Name is too long (max 100 chars)' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Name is too long (max 100 chars)' }, { status: 400 })
     }
     if (guestEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)) {
-      return NextResponse.json(
-        { error: 'Please enter a valid email' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Please enter a valid email' }, { status: 400 })
     }
     if (purchaseMessage && purchaseMessage.length > 300) {
-      return NextResponse.json(
-        { error: 'Message is too long (max 300 chars)' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Message is too long (max 300 chars)' }, { status: 400 })
     }
 
     const supabase = getSupabaseAdmin()
@@ -78,6 +91,7 @@ export async function POST(req: NextRequest) {
         reserved_at: new Date().toISOString(),
       })
       .eq('id', giftId)
+      .eq('invitation_id', invitation.id)
       .eq('status', 'available')
       .eq('is_active', true)
       .select('id, name, status')
@@ -88,6 +102,7 @@ export async function POST(req: NextRequest) {
         .from('gifts')
         .select('id, status')
         .eq('id', giftId)
+        .eq('invitation_id', invitation.id)
         .single()
 
       if (!existing) {
@@ -95,10 +110,7 @@ export async function POST(req: NextRequest) {
       }
       if (existing.status !== 'available') {
         return NextResponse.json(
-          {
-            error:
-              'Someone else just marked this gift as purchased. Please refresh and choose another. 💛',
-          },
+          { error: 'Someone else just marked this gift as purchased. Please refresh and choose another. 💛' },
           { status: 409 }
         )
       }
@@ -112,9 +124,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, gift: updated })
   } catch (err) {
     console.error('[GIFTS POST] Unexpected error:', err)
-    return NextResponse.json(
-      { error: 'Something went wrong. Please try again.' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 })
   }
 }

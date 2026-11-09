@@ -4,6 +4,7 @@ import { Check, Copy, X, CreditCard, ExternalLink, Sparkles, Package, Phone, Map
 import { useState, useEffect, useCallback } from 'react'
 import { fadeUp, staggerFast, staggerContainer, viewportDefaults } from '@/lib/motion'
 import type { PublicGift, PublicSiteSettings, ShopName } from '@/lib/supabase'
+import { useInvitationSlug } from '@/lib/wedding-data'
 const SHOP_LABELS: Record<ShopName, string> = {
   tokopedia: 'Tokopedia',
   shopee: 'Shopee',
@@ -20,6 +21,7 @@ function formatPrice(idr: number) {
   return 'Rp ' + idr.toLocaleString('id-ID')
 }
 export function GiftRegistry() {
+  const slug = useInvitationSlug()
   const [gifts, setGifts] = useState<PublicGift[]>([])
   const [settings, setSettings] = useState<PublicSiteSettings | null>(null)
   const [loading, setLoading] = useState(true)
@@ -34,8 +36,8 @@ export function GiftRegistry() {
   const loadAll = useCallback(async () => {
     try {
       const [giftsRes, settingsRes] = await Promise.all([
-        fetch('/api/gifts', { cache: 'no-store' }),
-        fetch('/api/settings', { cache: 'no-store' }),
+        fetch(`/api/public/gifts?slug=${encodeURIComponent(slug)}`, { cache: 'no-store' }),
+        fetch(`/api/public/settings?slug=${encodeURIComponent(slug)}`, { cache: 'no-store' }),
       ])
       const giftsData = await giftsRes.json()
       const settingsData = await settingsRes.json()
@@ -46,7 +48,7 @@ export function GiftRegistry() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [slug])
   useEffect(() => {
     loadAll()
   }, [loadAll])
@@ -62,10 +64,11 @@ export function GiftRegistry() {
     setSubmitting(true)
     setReserveError('')
     try {
-      const res = await fetch('/api/gifts', {
+      const res = await fetch('/api/public/gifts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          slug,
           giftId: modalGift.id,
           guestName: guestName.trim(),
           guestEmail: guestEmail.trim() || undefined,

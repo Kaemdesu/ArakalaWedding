@@ -2,7 +2,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, Heart, X } from 'lucide-react'
 import { useState } from 'react'
-import { useWeddingData } from '@/lib/wedding-data'
+import { useInvitationSlug, useWeddingData } from '@/lib/wedding-data'
 import { fadeUp, staggerContainer, viewportDefaults } from '@/lib/motion'
 
 type Attendance = 'accept' | 'decline'
@@ -15,6 +15,7 @@ const labelClass =
 
 export function Rsvp() {
   const wedding = useWeddingData()
+  const slug = useInvitationSlug()
   const [attendance, setAttendance] = useState<Attendance>('accept')
   const [guests, setGuests] = useState(1)
   const [status, setStatus] = useState<Status>('idle')
@@ -27,13 +28,14 @@ export function Rsvp() {
     const form = e.currentTarget
     const data = new FormData(form)
     const payload = {
+      slug,
       fullName: ((data.get('fullName') as string) || '').trim(),
       email: ((data.get('email') as string) || '').trim(),
       attendance,
       guestCount: attendance === 'accept' ? guests : null,
     }
     try {
-      const res = await fetch('/api/rsvp', {
+      const res = await fetch('/api/public/rsvp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

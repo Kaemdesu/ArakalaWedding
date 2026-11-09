@@ -2,11 +2,13 @@
 import { motion } from 'framer-motion'
 import { Gift, ArrowRight } from 'lucide-react'
 import { fadeUp, staggerContainer, viewportDefaults } from '@/lib/motion'
+import { useInvitationSlug } from '@/lib/wedding-data'
 
 export function GiftRegistryCta() {
+  const slug = useInvitationSlug()
   const goToGifts = () => {
     if (typeof window !== 'undefined') {
-      window.location.href = '/gifts'
+      window.location.href = `/w/${slug}/gifts`
     }
   }
   return (
