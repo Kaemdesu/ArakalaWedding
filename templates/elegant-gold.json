@@ -1,0 +1,35 @@
+{
+  "id": "elegant-gold",
+  "name": "Elegant Gold",
+  "description": "Warm ivory background, gold accents, serif display type. Classic and timeless.",
+  "tier": "basic",
+  "palette": {
+    "background": "#faf7f2",
+    "foreground": "#2b2620",
+    "accent": "#b08d3e",
+    "muted": "#8a8378"
+  },
+  "fonts": {
+    "heading": "Cormorant Garamond",
+    "body": "Poppins"
+  },
+  "sections": [
+    "hero",
+    "invitation-message",
+    "couple",
+    "events",
+    "venue-map",
+    "gallery",
+    "rsvp",
+    "dress-code",
+    "wishes",
+    "gifts",
+    "countdown",
+    "footer"
+  ],
+  "decorations": {
+    "divider": "floral",
+    "frame": "arch",
+    "motion": "fade-up"
+  }
+}

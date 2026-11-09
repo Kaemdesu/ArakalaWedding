@@ -1,0 +1,33 @@
+{
+  "id": "minimal-ivory",
+  "name": "Minimal Ivory",
+  "description": "Clean ivory canvas, charcoal text, single accent. Modern minimal.",
+  "tier": "basic",
+  "palette": {
+    "background": "#fdfcfb",
+    "foreground": "#1f1d1a",
+    "accent": "#7a6a53",
+    "muted": "#a39e94"
+  },
+  "fonts": {
+    "heading": "Cormorant Garamond",
+    "body": "Inter"
+  },
+  "sections": [
+    "hero",
+    "invitation-message",
+    "couple",
+    "events",
+    "venue-map",
+    "gallery",
+    "rsvp",
+    "wishes",
+    "countdown",
+    "footer"
+  ],
+  "decorations": {
+    "divider": "line",
+    "frame": "none",
+    "motion": "fade"
+  }
+}
